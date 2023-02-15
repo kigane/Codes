@@ -1,3 +1,5 @@
+import random
+
 from pysynth import *
 
 # from pysynth_b import *
@@ -41,9 +43,19 @@ def nums_to_clip(nums: str):
     return clip
 
 
+def gen_random_exer(name='excer.wav', bpm=90):
+    ret = ''
+    for i in range(8):
+        ret += str(random.randint(1, 7))
+    make_wav(nums_to_clip(ret), fn=name, bpm=bpm)
+    return ret
+
+
 if __name__ == '__main__':
-    exer1 = '314314343321'
-    make_wav(nums_to_clip(exer1), fn="exer1.wav", bpm=80)
+    print(gen_random_exer())
+
+    # exer1 = '314314343321'
+    # make_wav(nums_to_clip(exer1), fn="exer1.wav", bpm=80)
 
     # song = '31431434332125343'
     # leng = '48848848848844488'
