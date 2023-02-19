@@ -132,9 +132,12 @@ float DrawPoint(vec3 ro, vec3 rd, vec3 p) {
 
 void main()
 {
-    vec2 uv = gl_FragCoord.xy / iResolution.xy;
-    uv -= vec2(0.5);
-    uv.x *= iResolution.x/iResolution.y;
+    vec2 st = gl_FragCoord.xy;
+    int step = 1;
+    float stepsize = 1.0 / float(step);
+
+    float diffuse;
+    vec3 col;
 
     // 0.确定视点
     vec3 ro = vec3(0.0, 2.0, -5.0) + vec3(cos(iTime), 0, sin(iTime));
@@ -147,30 +150,41 @@ void main()
     vec3 up = cross(forward, right);
     // 2.确定屏幕中心点
     vec3 view_center = ro + forward * zoom;
-    // 3.确定任意像素点的坐标
-    vec3 i = view_center + uv.x*right + uv.y*up;
-    // 4.确定任意像素点的方向
-    vec3 rd = i - ro;
 
-    float d = 0.;
-    
-    d += DrawPoint(ro, rd, vec3(0., 0., 0.));
-    d += DrawPoint(ro, rd, vec3(0., 0., 1.));
-    d += DrawPoint(ro, rd, vec3(0., 1., 0.));
-    d += DrawPoint(ro, rd, vec3(0., 1., 1.));
-    d += DrawPoint(ro, rd, vec3(1., 0., 0.));
-    d += DrawPoint(ro, rd, vec3(1., 0., 1.));
-    d += DrawPoint(ro, rd, vec3(1., 1., 0.));
-    d += DrawPoint(ro, rd, vec3(1., 1., 1.));
+    for (int it = 0; it < step; it++)
+    {
+        for (int j = 0; j < step; j++)
+        {       
+            vec2 uv = st + vec2(it * stepsize, j * stepsize) / iResolution.xy;
+            uv.x *= iResolution.x/iResolution.y;
+            uv -= vec2(0.5) ;
+            
+            // 3.确定任意像素点的坐标
+            vec3 i = view_center + uv.x*right + uv.y*up;
+            // 4.确定任意像素点的方向
+            vec3 rd = i - ro;
 
-    vec3 col = vec3(d);
+            // float d = 0.;
+            
+            // d += DrawPoint(ro, rd, vec3(0., 0., 0.));
+            // d += DrawPoint(ro, rd, vec3(0., 0., 1.));
+            // d += DrawPoint(ro, rd, vec3(0., 1., 0.));
+            // d += DrawPoint(ro, rd, vec3(0., 1., 1.));
+            // d += DrawPoint(ro, rd, vec3(1., 0., 0.));
+            // d += DrawPoint(ro, rd, vec3(1., 0., 1.));
+            // d += DrawPoint(ro, rd, vec3(1., 1., 0.));
+            // d += DrawPoint(ro, rd, vec3(1., 1., 1.));
 
-    float t = RayMarching(ro, rd);
-    vec3 p = ro + t * rd;
-    float diffuse = GetLight(p);
-    col = vec3(diffuse);
+            // vec3 col = vec3(d);
+
+            float t = RayMarching(ro, rd);
+            vec3 p = ro + t * rd;
+            diffuse += GetLight(p);
+        }
+    }
+    col = vec3(0.8);
     // col = GetNormal(p);
 
     // Output to screen
-    gl_FragColor  = vec4(col,1.0);
+    gl_FragColor  = vec4(col, 1.0);
 }
