@@ -1,9 +1,9 @@
 #define PI 3.14159265359
 #define TWO_PI 6.28318530718
-#define MAX_STEPS 100
+#define MAX_STEPS 1000
 #define MAX_DIST 100.0
 #define SURF_DIST 0.005
-#define iTime iGlobalTime
+#define iTime iGlobalTime  
 
 float smin(float a, float b, float k)
 {
@@ -114,7 +114,7 @@ float GetLight(vec3 p)
     // 从p点出发会先检测到自己，并且距离小于SURF_DIST
     // 因此需要让p点先沿法线移动足够的距离，才能得到正确的结果。
     // float d = RayMarching(p, l); 
-    float d = RayMarching(p + n * SURF_DIST * 2.0, l);
+    float d = RayMarching(p + n * SURF_DIST * 3.0, l);
     if (d < length(p - lightPos)) diffuse *= 0.1;
     return 0.5 + 0.5 * diffuse;
 }
@@ -133,14 +133,15 @@ float DrawPoint(vec3 ro, vec3 rd, vec3 p) {
 void main()
 {
     vec2 st = gl_FragCoord.xy;
-    int step = 1;
+    int step = 4;
     float stepsize = 1.0 / float(step);
 
     float diffuse;
     vec3 col;
 
     // 0.确定视点
-    vec3 ro = vec3(0.0, 2.0, -5.0) + vec3(cos(iTime), 0, sin(iTime));
+    vec3 ro = vec3(0.0, 2.0, -5.0) + vec3(0.5, 0.5, 1.0);
+    //+ vec3(cos(iTime), 0, sin(iTime));
     // camera
     // 1.确定lookAt矩阵
     float zoom = 1.0;
@@ -155,9 +156,9 @@ void main()
     {
         for (int j = 0; j < step; j++)
         {       
-            vec2 uv = st + vec2(it * stepsize, j * stepsize) / iResolution.xy;
-            uv.x *= iResolution.x/iResolution.y;
+            vec2 uv = (st + vec2(float(it) * stepsize, float(j) * stepsize)) / iResolution.xy;
             uv -= vec2(0.5) ;
+            uv.x *= iResolution.x/iResolution.y;
             
             // 3.确定任意像素点的坐标
             vec3 i = view_center + uv.x*right + uv.y*up;
@@ -182,7 +183,7 @@ void main()
             diffuse += GetLight(p);
         }
     }
-    col = vec3(0.8);
+    col = vec3(diffuse / float(step * step));
     // col = GetNormal(p);
 
     // Output to screen
