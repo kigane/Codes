@@ -62,16 +62,44 @@ float GetDist(vec3 p)
 {
     // p += vec3(0.0, 2.0, -3.0);
     // 平面
+    // float pla_dist = p.y + sin(1.5 * p.x);
     float pla_dist = p.y;
 
     // 立方体
     vec3 bp = p;
     bp -= vec3(0, 0.5, 0); // 平移
-    // bp.xz *= rotate2d(iTime); // 旋转
-    float box_dist = sdBox(bp, vec3(0.5));
 
-    // 最终距离
-    float dist = min(pla_dist, box_dist); 
+    // 制造一个镜像物体。会导致光线行进变慢。
+    // bp.x = abs(bp.x);
+    // bp.x -= 1.5;
+
+    // 任意平面的镜像函数
+    vec3 n = normalize(vec3(1.0, 1.0, 1.0)); // 平面法线
+    bp -= 2.0 * n * min(0.0, dot(p, n)); // 点到平面的距离x2
+    bp -= 1.5 * n;
+    // 多次折叠空间
+    n = normalize(vec3(1.0, -1.0, 1.0)); // 平面法线
+    bp -= 2.0 * n * min(0.0, dot(p, n)); // 点到平面的距离x2
+    bp -= 1.0 * n;
+
+    // 缩放
+    // float scale = 2.0; // 一格代表的距离变大，所以实际立方体变小了
+    float scale = mix(1.0, 2.0, smoothstep(-0.5, 1.0, bp.y));
+    bp.xz *= scale;
+    bp.xz *= rotate2d(smoothstep(0.0, 1.0, bp.y) * 2.0);
+
+    float box_dist = sdBox(bp, vec3(1.0, 1.0, 1.0)) / scale;
+
+    // bp.z -= sin(bp.x * 8.0 + iTime*3.) * 0.1; // z方向波浪
+    
+    // bp.xz *= rotate2d(iTime); // 整体旋转
+    // float box_dist = sdBox(bp, vec3(0.5));
+
+    // Displace Mapping 为尺寸添加噪音扰动
+    // float box_dist = sdBox(bp, vec3(0.5) - sin(p.x * 7.5 + iTime * 3.0) * 0.05);
+
+    // 最终步进距离
+    float dist = min(pla_dist, box_dist * 0.2); 
     return dist;
 }
 
@@ -82,9 +110,11 @@ float RayMarching(vec3 ro, vec3 rd)
     for (int i = 0; i < MAX_STEPS; i++)
     {
         vec3 p = ro + t * rd;
+        // 每次行进的距离. 不一定对应真实的距离.
         float dist = GetDist(p);
         t += dist;
-        if (dist < SURF_DIST || t > MAX_DIST) break;
+        // 点的最终位置还是由这里决定
+        if (abs(dist) < SURF_DIST || t > MAX_DIST) break;
     }
 
     return t;
@@ -140,8 +170,8 @@ void main()
     vec3 col;
 
     // 0.确定视点
-    vec3 ro = vec3(0.0, 2.0, -5.0) + vec3(0.5, 0.5, 1.0);
-    //+ vec3(cos(iTime), 0, sin(iTime));
+    // vec3 ro = vec3(0.0, 2.0, -5.0) + vec3(0.5, 0.5, 1.0);
+    vec3 ro = vec3(0.0, 2.0, -5.0) + vec3(0.5, 0.5, 1.0) + vec3(cos(iTime), 0, sin(iTime));
     // camera
     // 1.确定lookAt矩阵
     float zoom = 1.0;
