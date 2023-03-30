@@ -1,4 +1,5 @@
 import asyncio
+from typing import Awaitable
 from datetime import datetime
 from icecream import ic
 ic.configureOutput(prefix=lambda: datetime.now().strftime('%H:%M:%S | '),
@@ -19,6 +20,8 @@ async def print_nums():
 
 
 async def main():
+    await asyncio.gather(fetch_data(), print_nums())
+    return
     task1 = asyncio.create_task(fetch_data())
     task2 = asyncio.create_task(print_nums())
 
