@@ -1,4 +1,7 @@
 result
+assets/results
+assets/quality
+assets/tmp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

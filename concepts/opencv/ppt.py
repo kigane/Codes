@@ -14,8 +14,8 @@ def slide(img1, img2):
 
 
 if __name__ == '__main__':
-    img1 = cv.imread('images/cat.jpg')
-    img2 = cv.imread('images/cat2.jpg')
+    img1 = cv.imread('assets/images/cat.jpg')
+    img2 = cv.imread('assets/images/cat2.jpg')
     slide(img1, img2)
     cv.waitKey(0)
     cv.destroyAllWindows()

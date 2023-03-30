@@ -133,10 +133,10 @@ float DrawPoint(vec3 ro, vec3 rd, vec3 p) {
 void main()
 {
     vec2 st = gl_FragCoord.xy;
-    int step = 1;
+    int step = 4;
     float stepsize = 1.0 / float(step);
 
-    float diffuse;
+    float dif;
     vec3 col;
 
     // 0.确定视点
@@ -155,7 +155,7 @@ void main()
     {
         for (int j = 0; j < step; j++)
         {       
-            vec2 uv = st + vec2(it * stepsize, j * stepsize) / iResolution.xy;
+            vec2 uv = (st + vec2(float(it) * stepsize, float(j) * stepsize)) / iResolution.xy;
             uv.x *= iResolution.x/iResolution.y;
             uv -= vec2(0.5) ;
             
@@ -179,10 +179,10 @@ void main()
 
             float t = RayMarching(ro, rd);
             vec3 p = ro + t * rd;
-            diffuse += GetLight(p);
+            dif += GetLight(p);
         }
     }
-    col = vec3(0.8);
+    col = vec3(dif / float(step * step));
     // col = GetNormal(p);
 
     // Output to screen
