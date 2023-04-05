@@ -2,6 +2,9 @@ from functools import wraps
 
 # 原理
 def f1(func):
+    '''
+    some document
+    '''
     def wrapper():
         print('hello')
         func()
@@ -33,10 +36,16 @@ def f2(func):
 
 @f2
 def h(x, y):
+    '''h doc'''
     print(x, y)
     return x + y
 
 print(h(3, 4))
+
+print(f.__name__)  # wrapper
+print(h.__name__)  # h
+print(f.__doc__)  # wrapper's doc
+print(h.__doc__)  # h
 
 
 
