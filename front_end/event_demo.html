@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Event Capturing Example</title>
+</head>
+<style>
+  #obstacle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100px;
+    height: 100px;
+    background-color: red;
+    pointer-events: none;
+    /* 禁用所有鼠标事件，相应事件会被传递给被遮挡的元素 */
+  }
+</style>
+
+<body>
+  <div id="outer">
+    <div id="inner">
+      <button id="myButton">Click Me</button>
+    </div>
+  </div>
+  <div id="obstacle"></div>
+
+  <script>
+    function captureHandler() {
+      console.log('Button Capture Handler');
+    }
+    function outerCaptureHandler() {
+      console.log('Outer Capture Handler');
+    }
+    function innerCaptureHandler(e) {
+      console.log('Inner Capture Handler');
+      //e.stopImmediatePropagation()
+    }
+    function bubbleHandler() {
+      console.log('Button Bubble Handler');
+    }
+    function outerBubbleHandler() {
+      console.log('Outer Bubble Handler');
+    }
+    function innerBubbleHandler(e) {
+      console.log('Inner Bubble Handler');
+      e.stopImmediatePropagation()
+    }
+
+
+    // 在 DOM 树中，事件从根节点（即 window 对象）一直向下传递到目标节点，然后再从目标节点向上传递到根节点。
+    // 完整流程outer capture-> inner capture-> button capture -> button bubble -> inner bubble -> outer bubble.
+
+    // 自定义事件
+    // bubbles: true ==> 完整流程
+    // bubbles: false ==> outer capture-> inner capture-> button capture -> button bubble
+    var myEvent = new CustomEvent('myEvent', {
+      bubbles: false,
+      cancelable: true,
+      detail: {
+        message: 'Hello, world!'
+      }
+    });
+
+    var outer = document.getElementById('outer');
+    outer.addEventListener('click', outerCaptureHandler, true); // useCapture is set to true
+    var inner = document.getElementById('inner');
+    inner.addEventListener('click', innerCaptureHandler, true); // useCapture is set to true
+    var myButton = document.getElementById('myButton');
+    myButton.addEventListener('click', captureHandler, true); // useCapture is set to true
+
+    var outer = document.getElementById('outer');
+    outer.addEventListener('click', outerBubbleHandler); // useCapture default is false
+    var inner = document.getElementById('inner');
+    inner.addEventListener('click', innerBubbleHandler); // useCapture default is false
+    var myButton = document.getElementById('myButton');
+    myButton.addEventListener('click', bubbleHandler); // useCapture default is false
+
+    // 处理自定义事件
+    myButton.addEventListener('myEvent', function (event) {
+      console.log('button', event.detail.message); // "Hello, world!"
+    });
+    inner.addEventListener('myEvent', function (event) {
+      console.log('inner', event.detail.message); // "Hello, world!"
+    });
+    myButton.addEventListener('myEvent', function (event) {
+      console.log('button cap', event.detail.message); // "Hello, world!"
+    }, true);
+    inner.addEventListener('myEvent', function (event) {
+      console.log('inner cap', event.detail.message); // "Hello, world!"
+    }, true);
+
+    var obsEl = document.getElementById('obstacle');
+    obsEl.addEventListener('click', function (event) {
+      event.preventDefault(); // 阻止事件的一些默认行为。如链接点击的跳转。
+      event.stopPropagation(); // 终止事件捕获及冒泡流程。
+      // event.target为触发事件的元素。(click：DOM树中离根最远的元素节点)
+      event.target.style.display = 'none'; // hide obsEl
+
+      myButton.dispatchEvent(myEvent) // 触发自定义事件
+    });
+  </script>
+</body>
+
+</html>
