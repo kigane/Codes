@@ -4,8 +4,8 @@ from datetime import datetime
 from icecream import ic
 
 import utils
-from leetcode.bucket_sort import *
-from leetcode.comparator import comparator
+from concepts.leetcode.bucket_sort import *
+from concepts.leetcode.comparator import comparator
 
 ic.configureOutput(prefix=lambda: datetime.now().strftime('%H:%M:%S | '),
                    includeContext=False)
@@ -21,13 +21,16 @@ def test_bucket_sort():
 
 
 if __name__ == '__main__':
+    import my_package
     # test_bucket_sort()
     # nums = [1, 2, 3, 4, 5, 6, 7]
     # from leetcode.rotate_arr import *
     # rotate_s1_reverse(nums, 3)
     # utils.profile(test_bucket_sort, repeat=5)
+    my_package.hello()
     for i in range(1, 5):
         pass
+
     ic(i)
     a = [1, 2, 5]
     b = [1, 2, 6]
