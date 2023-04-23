@@ -12,6 +12,7 @@ async def main():
     task = asyncio.create_task(foo("hello"))  # 创建任务，不阻塞当前程序执行流
     await task  # 等待任务执行完才继续
     ic("finish")
+    return 42
 
 
 async def foo(text):
@@ -21,4 +22,5 @@ async def foo(text):
     await asyncio.sleep(1)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    result = asyncio.run(main())
+    ic(f'Answer: {result}')
