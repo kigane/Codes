@@ -14,6 +14,8 @@ import threading
 import json
 import hashlib
 
+from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
+
 console = Console()
 
 
@@ -48,16 +50,6 @@ def ceil(num):
         return int(num) + 1
     else:
         return num
-
-
-def splitThreads(data, num):
-    for i in range(ceil(len(data) / num)):
-        _from = i * num
-
-        _to = (i + 1) * num
-        if _to >= len(data):
-            _to = len(data)
-        yield data[_from:_to]
 
 
 class Episode:
@@ -99,7 +91,7 @@ class Episode:
 
         return os.path.join(self.rootPath, f"{index}.jpg")
 
-    def download(self, progress):
+    def download(self):
         url = 'https://manga.bilibili.com/twirp/comic.v1.Comic/GetImageIndex?device=pc&platform=web'
         payloads = {
             'ep_id': self.id
@@ -112,7 +104,6 @@ class Episode:
         if rep.ok:
             data = rep.json()
             images = data['data']['images']
-            epi_task_id = progress.add_task(f'正在下载 第{self.title}话', total=len(images))
             paths = []
             for img in images:
                 paths.append(img['path'])
@@ -128,16 +119,10 @@ class Episode:
             # 获取每张图片的实际url和token
             rep = _()
             if rep.ok:
-                # 非主线程是没有默认的event_loop的
-                # loop = asyncio.new_event_loop()
-                # asyncio.set_event_loop(loop)
-                # loop.run_until_complete(asyncio.gather(*[self.downloadImg(img['token'], img['url'], i) for i, img in zip(range(1, len(images) + 1), rep.json()['data'])]))
-
                 i = 1
                 for img in rep.json()['data']:
                     self.downloadImg(img['token'], img['url'], i)
                     i += 1
-                    progress.advance(epi_task_id, advance=1)
 
 class Comic:
     """
@@ -200,17 +185,13 @@ class Comic:
             data = rep.json()
             self.analyzeData(data)
             # 开始爬取
-            with Progress() as progress:
-                for epis in splitThreads(self.episodes, self.threads):
-                    i = 0
-                    threads = []
-                    for epi in epis:
-                        t = threading.Thread(target=epi.download, args=[progress])
-                        t.start()
-                        threads.append(t)
-
-                    for t in threads:
-                        t.join()
+            with console.status("[grenn]Downloading"), ProcessPoolExecutor(max_workers=8) as pool:
+                # fan-out. 用类的实例方法作map的参数应该要手动绑定方法。
+                # task = progress.add_task("Download episodes", total=len(self.episodes))
+                for _ in pool.map(Episode.download, self.episodes):
+                    # progress.advance(task, 1)
+                    pass
+                # auto fan-in
 
             info('任务完成!')
 
@@ -293,3 +274,4 @@ if __name__ == '__main__':
 
     # 8 threads asyncio 86s
     # 8 threads no asyncio 86s
+    # 8 process no asyncio 51s
