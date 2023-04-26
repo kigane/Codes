@@ -1,9 +1,8 @@
-import argparse
 import asyncio
+from dataclasses import dataclass
 import aiofiles
 import aiohttp
 import os
-import shutil
 from rich import print
 from rich.table import Table
 from rich.console import Console
@@ -11,8 +10,8 @@ from rich.progress import Progress, track
 import requests
 import datetime
 import time
+import tyro
 from retry import retry
-import threading
 import json
 import hashlib
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -204,7 +203,7 @@ class Comic:
             self.analyzeData(data)
 
             # 开始爬取
-            with console.status("下载中 ..."), ProcessPoolExecutor(max_workers=self.threads) as pool:
+            with console.status("下载中 ..."), ThreadPoolExecutor(max_workers=self.threads) as pool:
                 pool.map(Episode.download, self.episodes)
             info('任务完成!')
 
@@ -262,26 +261,36 @@ class Comic:
         info(f'分析结束 将爬取章节数: {len(self.episodes)}/{self.total} 准备开始爬取!')
         return True
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--id', default='30460', type=str, help='https://manga.bilibili.com/detail/mc{comicID} 漫画主页网址的最后几个数字')
-    parser.add_argument('--sessdata', default="", type=str, help='付费漫画需要的cookie')
-    # 30460
-    parser.add_argument('--threads', default=8, type=int, help='最大线程数')
-    parser.add_argument('--start', default=0, type=int, help='需要下载的起始章节')
-    parser.add_argument('--end', default=0, type=int, help='需要下载的结束章节。0->0表示全下')
-    args, _ = parser.parse_known_args()
+@dataclass
+class Args(object):
+    """Description: bilibili漫画爬虫"""
 
-    # comicID = args.id
-    comicID = 28241
-    sessdata = "6b5090fe,1697711767,8b770*42"
-    args.start = 0
-    args.end = 13
-    c = Comic(comicID, sessdata, args)
+    id: str = 28241 
+    """https://manga.bilibili.com/detail/mc{comicID} 漫画主页网址中的最后几个数字"""
+
+    sessdata: str = "6b5090fe,1697711767,8b770*42" 
+    """付费漫画需要的cookie"""
+
+    threads: int = 8 
+    """同时启动的线程数"""
+
+    start: int = 0 
+    """需要下载的起始章节"""
+
+    end: int = 0
+    """需要下载的结束章节。0->0表示全下"""
+
+
+if __name__ == '__main__':
+    # 如果没有description，则会使用Args的类注释作为description
+    args = tyro.cli(Args, description="Cli: bilibili漫画爬虫")
+
+    c = Comic(args.id, args.sessdata, args)
     fetch_start = time.time()
     c.fetch()
     fetch_end = time.time()
     info(f'结束: 耗时 {fetch_end - fetch_start} s')
 
-    # 8 threads asyncio 86s
-    # 8 threads no asyncio 86s
+    # 8 threads asyncio 15.76s
+    # 8 processes asyncio 13.2s
+    # 8 processes no asyncio 67.3s
